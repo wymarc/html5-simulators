@@ -1,0 +1,458 @@
+<!doctype html>
+<!--
+Sine Quadrant Simulator,v 1.1
+
+The Sine Quadrant Simulator is free software; you can redistribute it
+and/or modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2 of
+the License, or(at your option) any later version.
+
+The Sine Quadrant Simulator is distributed in the hope that it will be
+useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+Copyright (c) 2016 Timothy J. Mitchell
+
+1.0 - Initial Release
+1.1 - Modded bead line to touch sine scale, Modded Sine/Cosine lines to touch scales rather than cross 
+-->
+<html>
+	<head>
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<meta name="apple-mobile-web-app-title" content="Astrolabe Back">
+		<link rel="apple-touch-icon" href="icon.png">
+		<script type="text/javascript" src="jquery.min.js"></script>
+
+		<style>
+			body{ background-color: #EEE8AA; }	
+			div#preload { display: none; }						
+		</style>
+
+		<script>
+			$(function(){
+				var canvas=document.getElementById("canvas");
+				var ctx=canvas.getContext("2d");
+
+				var canvasOffset=$("#canvas").offset();
+				var offsetX=canvasOffset.left;
+				var offsetY=canvasOffset.top;
+
+				var weightSelected=false;
+				var beadSelected=false;
+				var degreeRadius = 562;
+				var oblRadius = 224;
+				var startAngle = 90 * (Math.PI/180);
+				var angle= startAngle;
+				var beta = 0;
+				var oblX;
+				var oblY;
+				var sineY;
+				var cosineX;
+				var weight = {"x":0,"y":0,"radius":650};
+				var bead = {"x":0,"y":0,"radius":460};
+				var mouseX;
+				var mouseY;
+				var mouseXLast;
+				var mouseYLast;	
+				
+				var showSinCosLine = false;
+				var showOblLine = false;
+				var showBeadLine = false;				
+
+				var frontImg=new Image();
+				frontImg.onload=function(){
+					draw();
+				}
+				frontImg.src="quadrant.png";
+
+				var selectSinCosImg=new Image();
+				selectSinCosImg.onload=function(){
+					var x = (canvas.width/2)-selectSinCosImg.width-10;
+					var y = -((canvas.width/2)-10);
+				}				
+				if(showSinCosLine == true){
+					selectSinCosImg.src="select.png";
+				}else{
+					selectSinCosImg.src="unselect.png";
+				}				
+							
+				var selectOblImg=new Image();
+				selectOblImg.onload=function(){
+					var x = (canvas.width/2)-selectOblImg.width-10;
+					var y = -((canvas.width/2)-10);
+				}				
+				if(showOblLine == true){
+					selectOblImg.src="select.png";
+				}else{
+					selectOblImg.src="unselect.png";
+				}				
+							
+				var selectBeadImg=new Image();
+				selectBeadImg.onload=function(){
+					var x = (canvas.width/2)-selectBeadImg.width-10;
+					var y = -((canvas.width/2)-10);
+				}				
+				if(showBeadLine == true){
+					selectBeadImg.src="select.png";
+				}else{
+					selectBeadImg.src="unselect.png";
+				}				
+							
+
+				//				if (window.DeviceMotionEvent==undefined) {
+				//				}else {
+				//					window.ondeviceorientation = function(event) {
+				//						beta = event.beta;
+				//						draw()
+				//					}
+				//				}
+
+				function drawWeightPath(){
+					ctx.save();
+					ctx.translate(45,45);
+					ctx.beginPath();
+					ctx.arc(weight.x,weight.y,20,0,2 * Math.PI, false);
+					//ctx.fillStyle="blue";
+					//ctx.fill();
+					ctx.restore();
+				}
+				
+				function drawBeadPath(){
+					ctx.save();
+					ctx.translate(45,45);
+					ctx.beginPath();
+					ctx.arc(bead.x,bead.y,20,0,2 * Math.PI, false);
+					//ctx.fillStyle="blue";
+					//ctx.fill();
+					ctx.restore();
+				}
+				
+				function drawSinCosButton(){
+					ctx.save();
+					ctx.drawImage(selectSinCosImg,600,550);
+					ctx.font = "12px Arial";
+					ctx.fillText("Sine/Cosine",640,570);
+					ctx.restore();
+				}
+				
+				function drawSinCosButtonPath(){
+					ctx.save();
+					ctx.beginPath();
+					ctx.arc(600+(selectSinCosImg.height/2),550+(selectSinCosImg.width/2),20,0,2 * Math.PI, false);
+					//ctx.fillStyle="blue";
+					//ctx.fill();
+					ctx.restore();
+				}
+				
+				function drawOblButton(){
+					ctx.save();
+					ctx.drawImage(selectOblImg,600,600);
+					ctx.font = "12px Arial";
+					ctx.fillText("Obliqity",640,620);
+					ctx.restore();
+				}
+				
+				function drawOblButtonPath(){
+					ctx.save();
+					ctx.beginPath();
+					ctx.arc(600+(selectOblImg.height/2),600+(selectOblImg.width/2),20,0,2 * Math.PI, false);
+					//ctx.fillStyle="blue";
+					//ctx.fill();
+					ctx.restore();
+				}
+				
+				function drawBeadButton(){
+					ctx.save();
+					ctx.drawImage(selectBeadImg,600,650);
+					ctx.font = "12px Arial";
+					ctx.fillText("Bead Position",640,670);
+					ctx.restore();
+				}
+				
+				function drawBeadButtonPath(){
+					ctx.save();
+					ctx.beginPath();
+					ctx.arc(600+(selectBeadImg.height/2),650+(selectBeadImg.width/2),20,0,2 * Math.PI, false);
+					//ctx.fillStyle="blue";
+					//ctx.fill();
+					ctx.restore();
+				}
+				
+				function draw(){
+					//clear
+					ctx.clearRect(0,0,canvas.width,canvas.height);
+					
+					// limit bead radius
+					if(bead.radius > 560){
+						bead.radius = 560;	
+					}
+					if(bead.radius < 0){
+						bead.radius = 0;	
+					}					
+					// get variables
+					//angle = startAngle - (-beta * (Math.PI/180));
+					weight.x = weight.radius * Math.cos(angle);
+					weight.y = weight.radius * Math.sin(angle);
+					bead.x = bead.radius * Math.cos(angle);
+					bead.y = bead.radius * Math.sin(angle);
+					oblX = oblRadius * Math.cos(angle);
+					oblY = oblRadius * Math.sin(angle);
+					sineY = degreeRadius * Math.sin(angle);
+					cosineX = degreeRadius * Math.cos(angle);
+					
+					// limit angles to 0-90
+					if(angle > 90 * (Math.PI/180)){
+						angle = 90 * (Math.PI/180);	
+					}
+					if(angle < 0){
+						angle = 0;	
+					}
+					
+					ctx.save();
+					ctx.translate(0,0);
+					ctx.drawImage(frontImg,0,0,frontImg.width,frontImg.height,0,0,frontImg.width,frontImg.height);
+					ctx.restore();
+
+					//draw cord
+					ctx.save();
+					ctx.translate(45,45);
+					ctx.lineWidth = 4;
+					ctx.beginPath();
+					ctx.moveTo(0,0);
+					ctx.lineTo(weight.x, weight.y);
+					ctx.stroke();
+
+					if(showSinCosLine == true){						
+						//draw sin/cos lines
+						ctx.lineWidth = 3;
+						ctx.strokeStyle = 'blue';
+						ctx.beginPath();
+						ctx.moveTo(cosineX,0);
+						ctx.lineTo(cosineX, sineY);
+						ctx.stroke();
+						ctx.beginPath();
+						ctx.moveTo(0,sineY);
+						ctx.lineTo(cosineX,sineY);
+						ctx.stroke();
+					}
+					
+					if(showOblLine == true){
+						//draw obliqity line
+						ctx.lineWidth = 3;
+						ctx.strokeStyle = 'purple';
+						ctx.beginPath();
+						ctx.moveTo(oblX,oblY);
+						ctx.lineTo(oblX,canvas.height);
+						ctx.stroke();
+					}
+					if(showBeadLine == true){
+						//draw bead line
+						ctx.lineWidth = 3;
+						ctx.strokeStyle = 'green';
+						ctx.beginPath();
+						ctx.moveTo(bead.x,0);
+						ctx.lineTo(bead.x,canvas.height);
+						ctx.stroke();
+					}
+
+					//draw weight
+					ctx.beginPath();
+					var gradient = ctx.createRadialGradient(weight.x, weight.y, 2, weight.x, weight.y, 15);
+					gradient.addColorStop(0, 'darkgrey');
+					gradient.addColorStop(1, 'grey');
+					ctx.arc(weight.x, weight.y, 15, 0, 2 * Math.PI, false);
+					ctx.fillStyle = gradient;
+					ctx.fill();					
+					
+					//draw bead
+					ctx.lineWidth = 2;
+					ctx.beginPath();
+					ctx.strokeStyle = 'green';
+					ctx.arc(bead.x, bead.y, 8, 0, 2 * Math.PI, false);
+					ctx.stroke();
+					
+					ctx.restore();
+					
+					ctx.font = "12px Arial";
+					ctx.fillText("astrolabeproject.com",canvas.width-130,canvas.height-15);
+					
+					
+					drawSinCosButton();
+					drawOblButton();
+					drawBeadButton();					
+				}
+				
+				function updateAngles(mouseXLast, mouseYLast, mouseX, mouseY){
+					var dx1=mouseXLast;
+					var dy1=mouseYLast;
+					var dx2=mouseX;
+					var dy2=mouseY;
+
+					if (weightSelected){					
+						// compute previous angle of mouse
+						var mouseAngle1=Math.atan2(dy1,dx1);
+
+						// compute new angle of mouse
+						var mouseAngle2=Math.atan2(dy2,dx2);
+
+						// add change in mouse angle to object angle
+						var delta = mouseAngle1 - mouseAngle2;
+
+						//console.log("delta: " + delta);					
+						angle=angle - delta;
+					}
+					
+					if (beadSelected){
+						// compute new bead.radius
+						var test = 90*(Math.PI/180);
+						var rad = (mouseX)/Math.sin(test-angle);
+						
+						bead.radius = rad;	
+						
+						//console.log("angle:" + (test-angle)/(Math.PI/180) + " sin: " + Math.sin(test-angle));					
+					}
+
+					draw();
+				}				
+				
+				
+				function updateSelected(mouseX,mouseY){
+					// determine what is pushed
+					// check weight					
+					drawWeightPath();
+					weightSelected=ctx.isPointInPath(mouseX,mouseY);
+					
+					drawBeadPath()
+					beadSelected=ctx.isPointInPath(mouseX,mouseY);
+					
+					drawSinCosButtonPath();
+					if(ctx.isPointInPath(mouseX,mouseY)){
+						if(showSinCosLine == true){
+							showSinCosLine = false;
+							selectSinCosImg.src="unselect.png";
+						}else{
+							showSinCosLine = true;
+							selectSinCosImg.src="select.png";
+						}						
+						draw();
+					}
+					
+					drawOblButtonPath();
+					if(ctx.isPointInPath(mouseX,mouseY)){
+						if(showOblLine == true){
+							showOblLine = false;
+							selectOblImg.src="unselect.png";
+						}else{
+							showOblLine = true;
+							selectOblImg.src="select.png";
+						}						
+						draw();
+					}
+					
+					drawBeadButtonPath();
+					if(ctx.isPointInPath(mouseX,mouseY)){
+						if(showBeadLine == true){
+							showBeadLine = false;
+							selectBeadImg.src="unselect.png";
+						}else{
+							showBeadLine = true;
+							selectBeadImg.src="select.png";
+						}						
+						draw();
+					}
+					
+					//console.log("Weight Selected:" + weightSelected + ", Bead Selected:" + beadSelected);
+				}				
+				
+				function handleMouseDown(e){
+					mouseX=parseInt(e.clientX-offsetX);
+					mouseY=parseInt(e.clientY-offsetY);
+					console.log("mouseX:" + mouseX + ", " + "mouseY:" + mouseY);
+					updateSelected(mouseX,mouseY);
+				}
+
+				function handleMouseUp(e){
+					beadSelected=false;
+					weightSelected=false;
+				}
+
+				function handleMouseOut(e){
+					beadSelected=false;
+					weightSelected=false;
+				}
+
+				function handleMouseMove(e){
+					if(!beadSelected && !weightSelected){return;}
+
+					// save previous mouse position
+					mouseXLast = mouseX;
+					mouseYLast = mouseY;
+
+					// get current mouse position
+					mouseX=parseInt(e.clientX-offsetX)-45;
+					mouseY=parseInt(e.clientY-offsetY)-45;
+
+					updateAngles(mouseXLast, mouseYLast, mouseX, mouseY);
+					//console.log("mouseX:" + mouseX + ", " + "mouseY:" + mouseY);
+				}
+				
+				function touchXY(e) {
+					if (!e){
+						var e = event;
+					}
+					e.preventDefault();
+					if(!weightSelected && !beadSelected){return;}
+
+					// save previous finger position
+					mouseXLast = mouseX;
+					mouseYLast = mouseY;
+
+					// get current finger position
+					mouseX = parseInt(e.pageX - offsetX)-45;
+					mouseY = parseInt(e.pageY - offsetY)-45;
+
+					updateAngles(mouseXLast, mouseYLast, mouseX, mouseY);
+				}
+
+				function touchUp() {
+					weightSelected = false;
+					beadSelected = false;
+				}
+
+				function touchDown(e) {
+					if (!e){
+						var e = event;
+					}
+					e.preventDefault();
+					mouseX = parseInt(e.pageX - offsetX);
+					mouseY = parseInt(e.pageY - offsetY);
+					updateSelected(mouseX,mouseY);
+				}				
+								
+				$("#canvas").mousedown(function(e){handleMouseDown(e);});
+				$("#canvas").mousemove(function(e){handleMouseMove(e);});
+				$("#canvas").mouseup(function(e){handleMouseUp(e);});
+				$("#canvas").mouseout(function(e){handleMouseOut(e);});
+				canvas.addEventListener("touchstart", touchDown, false);
+				canvas.addEventListener("touchmove", touchXY, true);
+				canvas.addEventListener("touchend", touchUp, false);
+
+				document.body.addEventListener("touchcancel", touchUp, false);
+
+				window.onload = draw();
+			});
+		</script>
+
+	</head>
+
+	<body>
+		<canvas id="canvas" width=720 height=720></canvas>
+		<div id="preload">
+		   <img src="quadrant.png" width="1" height="1" alt="Image 01" />
+		   <img src="select.png" width="1" height="1" alt="Image 02" />
+		   <img src="unselect.png" width="1" height="1" alt="Image 03" />
+		</div>			
+	</body>
+</html>

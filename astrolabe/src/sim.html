@@ -1,0 +1,606 @@
+<!doctype html>
+<!--
+Astrolabe Simulator,v 1.1
+
+The Astrolabe Simulator is free software; you can redistribute it
+and/or modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2 of
+the License, or(at your option) any later version.
+
+The Astrolabe Simulator is distributed in the hope that it will be
+useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+Copyright (c) 2016 Timothy J. Mitchell
+
+1.0 First pass
+1.1 Added advanced astrolabe option
+-->
+
+<html>
+	<head>
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<meta name="apple-mobile-web-app-title" content="Astrolabe">
+		<link rel="apple-touch-icon" href="icon.png">
+		<script type="text/javascript" src="jquery.min.js"></script>
+
+		<style>
+			body,canvas{ background-color: #EEE8AA; }
+			.panel {
+				float: left;
+				width: 701px;
+				height: 701px;
+				position: relative;
+				font-size: .8em;
+
+				-webkit-perspective: 1000px;
+				perspective: 1000px;
+			}
+			.panel .front {
+				float: none;
+				position: absolute;
+				top: 0;
+				left: 0;
+				z-index: 900;
+				width: inherit;
+				height: inherit;
+
+				text-align: center;
+
+				-webkit-transform: rotateX(0) rotateY(0);
+				transform: rotateX(0) rotateY(0);
+
+				-webkit-transform-style: preserve-3d;
+				transform-style: preserve-3d;
+
+				-webkit-backface-visibility: hidden;
+				backface-visibility: hidden;
+
+				/* -- transition is the magic sauce for animation -- */
+				-webkit-transition: all .6s ease-in-out;
+				transition: all .6s ease-in-out;
+			}
+			.panel.flip .front {
+				z-index: 900;
+				border-color: #eee;
+
+				box-shadow: 0 15px 50px rgba(0,0,0,0.2);
+
+				-webkit-transform: rotateY(179deg);
+				transform: rotateY(179deg);
+			}
+
+			.panel .back {
+				float: none;
+				position: absolute;
+				top: 0;
+				left: 0;
+				z-index: 800;
+				width: inherit;
+				height: inherit;
+
+
+				-webkit-transform: rotateY(-179deg);
+				transform: rotateY(-179deg);
+
+				-webkit-transform-style: preserve-3d;
+				transform-style: preserve-3d;
+
+				-webkit-backface-visibility: hidden;
+				backface-visibility: hidden;
+
+				/* -- transition is the magic sauce for animation -- */
+				-webkit-transition: all .6s ease-in-out;
+				transition: all .6s ease-in-out;
+			}
+
+			.panel.flip .back {
+				z-index: 1000;
+
+
+				-webkit-transform: rotateX(0) rotateY(0);
+				transform: rotateX(0) rotateY(0);
+
+
+			}
+
+			/* -- X axis rotation for astrolabe panel -- */
+			.astrolabe .front {
+				cursor: pointer;
+				-webkit-transform: rotateY(0);
+				transform: rotateY(0);
+			}
+			.astrolabe.flip .front {
+				-webkit-transform: rotateY(180deg);
+				transform: rotateY(180deg);
+			}
+			.astrolabe .back {
+				cursor: pointer;
+				-webkit-transform: rotateY(-180deg);
+				transform: rotateY(-180deg);
+			}
+			.astrolabe.flip .back {
+				-webkit-transform: rotateY(0);
+				transform: rotateY(0);
+			}
+			div#preload { display: none; }			
+		</style>
+		<script>
+			$(function(){
+				var advancedSelected = false;
+				var reteSelected=false;
+				var ruleSelected=false;
+				var alidadeSelected=false;
+				var lockedTogether=false;
+				var frontSide=true;
+				var reteAngle=0;
+				var ruleAngle=0;
+				var alidadeAngle=0;
+				var lockImgLocation = {"x":0,"y":0};
+				var flipImgLocation = {"x":0,"y":0};
+				var mouseX;
+				var mouseY;
+				var mouseXLast;
+				var mouseYLast;
+				
+
+				// set up front canvas
+				var canvasF=document.getElementById("canvasfront");
+				var ctxF=canvasF.getContext("2d");
+				var canvasOffsetF=$("#canvasfront").offset();
+				var offsetX=canvasOffsetF.left;
+				var offsetY=canvasOffsetF.top;
+				var cxF=canvasF.width/2;
+				var cyF=canvasF.height/2;
+				var wF=canvasF.width;
+				var hF=canvasF.height;
+
+				var frontImg=new Image();
+				frontImg.onload=function(){
+					draw();
+				}
+				frontImg.src="base.png";
+
+				var reteImg=new Image();
+				reteImg.onload=function(){
+					draw();
+				}
+				reteImg.src="rete.png";
+
+				var ruleImg=new Image();
+				ruleImg.onload=function(){
+					draw();
+				}
+				ruleImg.src="rule.png";
+
+				var horseImg=new Image();
+				horseImg.onload=function(){
+					draw();
+				}
+				horseImg.src="horse.png";
+
+
+				// set up back canvas
+				var canvasB=document.getElementById("canvasback");
+				var ctxB=canvasB.getContext("2d");
+				var canvasOffsetB=$("#canvasback").offset();
+				var cxB=canvasB.width/2;
+				var cyB=canvasB.height/2;
+				var wB=canvasB.width;
+				var hB=canvasB.height;
+
+				var backImg=new Image();
+				backImg.onload=function(){
+					draw();
+				}
+				backImg.src="backbase.png";
+
+				var imgAlidade=new Image();
+				imgAlidade.onload=function(){
+					draw();
+				}
+				imgAlidade.src="alidade.png";
+
+				var imgPin=new Image();
+				imgPin.onload=function(){
+					draw();
+				}
+				imgPin.src="pin.png";
+
+				// Set up controls
+				var flipImg=new Image();
+				flipImg.onload=function(){
+					var x = -((canvasF.width/2)-10);
+					var y = -((canvasF.width/2)-10);
+					flipImgLocation = {"x":x,"y":y};
+					draw();
+				}
+				flipImg.src="flip.png";
+
+				var lockImg=new Image();
+				lockImg.onload=function(){
+					var x = (canvasF.width/2)-lockImg.width-10;
+					var y = -((canvasF.width/2)-10);
+					lockImgLocation = {"x":x,"y":y};
+					draw();
+				}
+				lockImg.src="pinup.png";
+				
+				var advancedSelectedImg=new Image();
+				advancedSelectedImg.onload=function(){
+					var x = (canvasF.width/2)-advancedSelectedImg.width-10;
+					var y = -((canvasF.width/2)-10);
+				}				
+				if(advancedSelected == true){
+					advancedSelectedImg.src="select.png";
+				}else{
+					advancedSelectedImg.src="unselect.png";
+				}					
+
+				function draw(){
+					ctxF.clearRect(0,0,canvasF.width,canvasF.height);
+					ctxF.save();
+					ctxF.translate(cxF,cyF);
+					ctxF.drawImage(frontImg,0,0,frontImg.width,frontImg.height,-wF/2,-hF/2,wF,hF);
+					ctxF.restore();
+					ctxF.save();
+					ctxF.translate(cxF,cyF);
+					ctxF.rotate(reteAngle);
+					ctxF.drawImage(reteImg,0,0,reteImg.width,reteImg.height,-wF/2,-hF/2,wF,hF);
+					ctxF.restore();
+					ctxF.save();
+					ctxF.translate(cxF,cyF);
+					ctxF.rotate(ruleAngle);
+					ctxF.drawImage(ruleImg,0,0,ruleImg.width,ruleImg.height,-wF/2,-hF/2,wF,hF);
+					ctxF.restore();
+					ctxF.save();
+					ctxF.translate(cxF,cyF);
+					ctxF.drawImage(horseImg,0,0,horseImg.width,horseImg.height,-wF/2,-hF/2,wF,hF);
+					ctxF.restore();
+					if(flipImgLocation){
+						ctxF.save();
+						ctxF.translate(cxF,cyF);
+						ctxF.drawImage(flipImg,0,0,flipImg.width,flipImg.height,flipImgLocation.x,flipImgLocation.y,flipImg.width,flipImg.height);
+						ctxF.restore();
+					}
+					if(lockImgLocation){
+						ctxF.save();
+						ctxF.translate(cxF,cyF);
+						ctxF.drawImage(lockImg,0,0,lockImg.width,lockImg.height,lockImgLocation.x,lockImgLocation.y,lockImg.width,lockImg.height);
+						ctxF.restore();
+					}
+					
+					ctxF.save();
+					ctxF.drawImage(advancedSelectedImg,20,650);
+					ctxF.font = "12px Arial";
+					ctxF.fillText("Advanced",60,670);
+					ctxF.restore();					
+					
+					ctxF.font = "12px Arial";
+					ctxF.fillText("astrolabeproject.com",canvasF.width-130,canvasF.height-15);
+
+					ctxB.clearRect(0,0,canvasB.width,canvasB.height);
+					ctxB.save();
+					ctxB.translate(cxB,cyB);
+					ctxB.drawImage(backImg,0,0,backImg.width,backImg.height,-wB/2,-hB/2,wB,hB);
+					ctxB.restore();
+					ctxB.save();
+					ctxB.translate(cxB,cyB);
+					ctxB.rotate(alidadeAngle);
+					ctxB.drawImage(imgAlidade,0,0,imgAlidade.width,imgAlidade.height,-wB/2,-hB/2,wB,hB);
+					ctxB.restore();
+					ctxB.save();
+					ctxB.translate(cxB,cyB);
+					ctxB.drawImage(imgPin,0,0,imgPin.width,imgPin.height,-wB/2,-hB/2,wB,hB);
+					ctxB.restore();
+					ctxB.save();
+					ctxB.translate(cxB,cyB);
+					ctxB.drawImage(flipImg,0,0,flipImg.width,flipImg.height,flipImgLocation.x,flipImgLocation.y,flipImg.width,flipImg.height);
+					ctxB.restore();
+					
+					ctxB.save();
+					ctxB.drawImage(advancedSelectedImg,20,650);
+					ctxB.font = "12px Arial";
+					ctxB.fillText("Advanced",60,670);
+					ctxB.restore();	
+										
+					ctxB.font = "12px Arial";
+					ctxB.fillText("astrolabeproject.com",canvasB.width-130,canvasB.height-15);
+				}
+
+				function drawFlipPath(){
+					ctxF.save();
+					ctxF.translate(cxF,cyF);
+					ctxF.beginPath();
+					ctxF.arc(flipImgLocation.x+flipImg.height/2,flipImgLocation.y+flipImg.width/2,(flipImg.width/2)+10,0,2 * Math.PI, false);
+					//ctxF.fillStyle="blue";
+					//ctxF.fill();
+					ctxF.restore();
+				}
+
+				function drawLockPath(){
+					ctxF.save();
+					ctxF.translate(cxF,cyF);
+					ctxF.beginPath();
+					ctxF.arc(lockImgLocation.x+lockImg.height/2,lockImgLocation.y+lockImg.width/2,(lockImg.width/2)+10,0,2 * Math.PI, false);
+					//ctxF.fillStyle="blue";
+					//ctxF.fill();
+					ctxF.restore();
+				}
+				
+				function drawAdvButtonPath(){
+					ctxF.save();
+					ctxF.beginPath();
+					ctxF.arc(20+(advancedSelectedImg.height/2),650+(advancedSelectedImg.width/2),20,0,2 * Math.PI, false);
+					//ctxF.fillStyle="blue";
+					//ctxF.fill();					
+				}				
+
+				function drawRetePath(){
+					ctxF.save();
+					ctxF.translate(cxF,cyF);
+					ctxF.rotate(reteAngle);
+					ctxF.beginPath();
+					ctxF.arc(0,0,298,0,2 * Math.PI, false);
+					//ctxF.fillStyle="blue";
+					//ctxF.fill();
+					ctxF.restore();
+				}
+
+				function drawRulePath(){
+					ctxF.save();
+					ctxF.translate(cxF,cyF);
+					ctxF.rotate(ruleAngle);
+					ctxF.beginPath();
+					ctxF.moveTo(0,0);
+					ctxF.lineTo(0,-35);
+					ctxF.lineTo(wF/2-40,-35);
+					ctxF.lineTo(wF/2-40,0);
+					ctxF.closePath();
+					//ctxF.fillStyle="blue";
+					//ctxF.fill();
+					ctxF.restore();
+				}
+
+				function drawAlidadePath(){
+					ctxB.save();
+					ctxB.translate(cxB,cyB);
+					ctxB.rotate(alidadeAngle);
+					ctxB.beginPath();
+					ctxB.moveTo(0,-35);
+					ctxB.lineTo(wB/2,-35);
+					ctxB.lineTo(wB/2,0);
+					ctxB.lineTo(-wB/2,0);
+					ctxB.lineTo(-wB/2,35);
+					ctxB.lineTo(0,35);
+					ctxB.closePath();
+					//ctxB.fillStyle="blue";
+					//ctxB.fill();
+					ctxB.restore();
+				}
+				
+				function updateAngles(mouseXLast, mouseYLast, mouseX, mouseY){
+					var dx1=mouseXLast-cxF;
+					var dy1=mouseYLast-cyF;
+					var dx2=mouseX-cxF;
+					var dy2=mouseY-cyF;
+
+					// compute previous angle of mouse
+					var mouseAngle1=Math.atan2(dy1,dx1);
+
+					// compute new angle of mouse
+					var mouseAngle2=Math.atan2(dy2,dx2);
+
+					// add change in mouse angle to object angle
+					var delta = mouseAngle1 - mouseAngle2;
+
+					//console.log("deltaX/Y: " + deltaX + " / " + deltaY);
+
+					if (alidadeSelected){
+						alidadeAngle=alidadeAngle - delta;
+					}else if (lockedTogether){
+						ruleAngle=ruleAngle - delta;
+						reteAngle=reteAngle - delta;
+					}else if (ruleSelected){
+						ruleAngle=ruleAngle - delta;
+					}else if (reteSelected){
+						reteAngle=reteAngle - delta;
+					}
+
+					draw();
+				}
+
+				function updateSelected(mouseX,mouseY){
+					// determine what is pushed
+					// check flip button
+					drawFlipPath();
+					if (ctxF.isPointInPath(mouseX,mouseY)){
+						// flip canvas
+						if (frontSide){
+							$('#astrolabePanel').addClass('flip');
+						}else{
+							$('#astrolabePanel').removeClass('flip');
+						}
+
+						frontSide=!frontSide;
+						draw();
+						return;
+					}
+					
+					// check advanced button
+					drawAdvButtonPath();
+					if(ctxF.isPointInPath(mouseX,mouseY)){
+						if(advancedSelected == true){
+							advancedSelected = false;
+							advancedSelectedImg.src="unselect.png";
+							frontImg.src="base.png";
+							backImg.src="backbase.png";
+						}else{
+							advancedSelected = true;
+							advancedSelectedImg.src="select.png";
+							frontImg.src="baseadv.png";
+							backImg.src="backbaseadv.png";							
+						}						
+						draw();
+					}					
+					
+					if(frontSide){
+						//check lock button
+						drawLockPath();
+						if (ctxF.isPointInPath(mouseX,mouseY)){
+							if(lockedTogether){
+								//unlock
+								lockedTogether = false;
+								lockImg.src="pinup.png";
+								draw();
+							}else{
+								//lock
+								lockedTogether = true;
+								lockImg.src="pindown.png";
+								draw();
+							}
+							return;
+						}
+					}
+
+					// determine what is selected
+					if (frontSide){
+						alidadeSelected = false;
+						drawRulePath();
+						ruleSelected=ctxF.isPointInPath(mouseX,mouseY);
+
+						if (!ruleSelected){
+							drawRetePath();
+							reteSelected=ctxF.isPointInPath(mouseX,mouseY);
+						}
+					}else{
+						ruleSelected = false;
+						reteSelected = false;
+						drawAlidadePath();
+						alidadeSelected=ctxB.isPointInPath(mouseX,mouseY);
+					}
+					console.log("Rule:" + ruleSelected + ", " + "Rete:" + reteSelected + ", " + "Alidade:" + alidadeSelected  + ", " + "Adv:" + advancedSelected );
+				}
+
+				function handleMouseDown(e){
+					mouseX=parseInt(e.clientX-offsetX);
+					mouseY=parseInt(e.clientY-offsetY);
+					updateSelected(mouseX,mouseY);
+				}
+
+				function handleMouseUp(e){
+					reteSelected=false;
+					ruleSelected=false;
+					alidadeSelected=false;
+				}
+
+				function handleMouseOut(e){
+					reteSelected=false;
+					ruleSelected=false;
+					alidadeSelected=false;
+				}
+
+				function handleMouseMove(e){
+					if(!reteSelected && !ruleSelected && !alidadeSelected){return;}
+
+					// save previous mouse position
+					mouseXLast = mouseX;
+					mouseYLast = mouseY;
+
+					// get current mouse position
+					mouseX=parseInt(e.clientX-offsetX);
+					mouseY=parseInt(e.clientY-offsetY);
+
+					updateAngles(mouseXLast, mouseYLast, mouseX, mouseY);
+				}
+
+				function touchXY(e) {
+					if (!e){
+						var e = event;
+					}
+					e.preventDefault();
+					if(!reteSelected && !ruleSelected && !alidadeSelected){return;}
+
+					// save previous finger position
+					mouseXLast = mouseX;
+					mouseYLast = mouseY;
+
+					// get current finger position
+					mouseX = parseInt(e.pageX - offsetX);
+					mouseY = parseInt(e.pageY - offsetY);
+
+					updateAngles(mouseXLast, mouseYLast, mouseX, mouseY);
+				}
+
+				function touchUp() {
+					reteSelected = false;
+					ruleSelected = false;
+					alidadeSelected=false;
+				}
+
+				function touchDown(e) {
+					if (!e){
+						var e = event;
+					}
+					e.preventDefault();
+					mouseX = parseInt(e.pageX - offsetX);
+					mouseY = parseInt(e.pageY - offsetY);
+					updateSelected(mouseX,mouseY);
+				}
+
+				$("#canvasfront").mousedown(function(e){handleMouseDown(e);});
+				$("#canvasfront").mousemove(function(e){handleMouseMove(e);});
+				$("#canvasfront").mouseup(function(e){handleMouseUp(e);});
+				$("#canvasfront").mouseout(function(e){handleMouseOut(e);});
+				canvasF.addEventListener("touchstart", touchDown, false);
+				canvasF.addEventListener("touchmove", touchXY, true);
+				canvasF.addEventListener("touchend", touchUp, false);
+
+				$("#canvasback").mousedown(function(e){handleMouseDown(e);});
+				$("#canvasback").mousemove(function(e){handleMouseMove(e);});
+				$("#canvasback").mouseup(function(e){handleMouseUp(e);});
+				$("#canvasback").mouseout(function(e){handleMouseOut(e);});
+				canvasB.addEventListener("touchstart", touchDown, false);
+				canvasB.addEventListener("touchmove", touchXY, true);
+				canvasB.addEventListener("touchend", touchUp, false);
+
+				document.body.addEventListener("touchcancel", touchUp, false);
+
+				window.onload = draw();
+
+
+			}); // end $(function(){});
+
+		</script>
+
+	</head>
+
+	<body>
+		<div id="astrolabePanel" class="astrolabe panel">
+			<div class="front">
+				<canvas id="canvasfront" width=701 height=701></canvas>
+			</div>
+			<div class="back">
+				<canvas id="canvasback" width=701 height=701></canvas>
+			</div>
+		</div>
+		<div id="preload">
+		   <img src="base.png" width="1" height="1" alt="Image 01" />
+		   <img src="backbase.png" width="1" height="1" alt="Image 02" />
+		   <img src="baseadv.png" width="1" height="1" alt="Image 03" />
+		   <img src="backbaseadv.png" width="1" height="1" alt="Image 04" />
+		   <img src="alidade.png" width="1" height="1" alt="Image 05" />
+		   <img src="horse.png" width="1" height="1" alt="Image 06" />
+		   <img src="flip.png" width="1" height="1" alt="Image 07" />
+		   <img src="pin.png" width="1" height="1" alt="Image 08" />
+		   <img src="pindown.png" width="1" height="1" alt="Image 09" />
+		   <img src="pinup.png" width="1" height="1" alt="Image 10" />
+		   <img src="rete.png" width="1" height="1" alt="Image 11" />
+		   <img src="rule.png" width="1" height="1" alt="Image 12" />
+		   <img src="select.png" width="1" height="1" alt="Image 13" />
+		   <img src="unselect.png" width="1" height="1" alt="Image 14" />		   
+		</div>		
+	</body>
+</html>
