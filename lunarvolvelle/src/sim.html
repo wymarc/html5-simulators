@@ -1,0 +1,321 @@
+<!doctype html>
+<!--
+Lunar Volvelle Simulator,v 1.0
+
+The Lunar Volvelle Simulator is free software; you can redistribute it
+and/or modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2 of
+the License, or(at your option) any later version.
+
+The Lunar Volvelle Simulator is distributed in the hope that it will be
+useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+Copyright (c) 2017 Timothy J. Mitchell
+
+1.0 First pass
+
+Based on:
+http://www.bl.uk/catalogues/illuminatedmanuscripts/ILLUMIN.ASP?Size=mid&IllID=12771
+http://www.bl.uk/catalogues/illuminatedmanuscripts/record.asp?MSID=1262&CollID=28&NStart=848
+
+Catalog reference: Egerton 848 f. 22
+
+Book Title or subject: Medical miscellany, including an astronomical calendar
+-->
+
+<html>
+	<head>
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<meta name="apple-mobile-web-app-title" content="Lunar Volvelle">
+		<link rel="apple-touch-icon" href="icon.png">
+		<script type="text/javascript" src="jquery.min.js"></script>
+
+		<style>
+			body,canvas{ background-color: #EEE8AA; }
+			.panel {
+				float: left;
+				width: 700px;
+				height: 700px;
+				position: relative;
+				font-size: .8em;
+
+				-webkit-perspective: 1000px;
+				perspective: 1000px;
+			}
+			.panel .front {
+				float: none;
+				position: absolute;
+				top: 0;
+				left: 0;
+				z-index: 900;
+				width: inherit;
+				height: inherit;
+				text-align: center;
+			}
+			div#preload { display: none; }			
+		</style>
+		<script>
+			$(function(){
+				var calendarSelected=false;
+				var sunSelected=false;
+				var moonSelected=false;
+				var calendarAngle=0;
+				var sunAngle=0;
+				var moonAngle=0;
+				var mouseX;
+				var mouseY;
+				var mouseXLast;
+				var mouseYLast;				
+
+				// set up front canvas
+				var canvasF=document.getElementById("canvasfront");
+				var ctxF=canvasF.getContext("2d");
+				var canvasOffsetF=$("#canvasfront").offset();
+				var offsetX=canvasOffsetF.left;
+				var offsetY=canvasOffsetF.top;
+				var cxF=canvasF.width/2;
+				var cyF=canvasF.height/2;
+				var wF=canvasF.width;
+				var hF=canvasF.height;
+
+				var baseImg=new Image();
+				baseImg.onload=function(){
+					draw();
+				}
+				baseImg.src="base.png";
+
+				var calendarImg=new Image();
+				calendarImg.onload=function(){
+					draw();
+				}
+				calendarImg.src="calendar.png";
+
+				var sunImg=new Image();
+				sunImg.onload=function(){
+					draw();
+				}
+				sunImg.src="sun.png";
+
+				var moonImg=new Image();
+				moonImg.onload=function(){
+					draw();
+				}
+				moonImg.src="moon.png";
+
+				function draw(){
+					ctxF.clearRect(0,0,canvasF.width,canvasF.height);
+					ctxF.save();
+					ctxF.translate(cxF,cyF);
+					ctxF.drawImage(baseImg,0,0,baseImg.width,baseImg.height,-wF/2,-hF/2,wF,hF);
+					ctxF.restore();
+					
+					ctxF.save();
+					ctxF.translate(cxF,cyF);
+					ctxF.rotate(calendarAngle);
+					ctxF.drawImage(calendarImg,0,0,calendarImg.width,calendarImg.height,-wF/2,-hF/2,wF,hF);
+					ctxF.restore();
+					
+					ctxF.save();
+					ctxF.translate(cxF,cyF);
+					ctxF.rotate(sunAngle);
+					ctxF.drawImage(sunImg,0,0,sunImg.width,sunImg.height,-wF/2,-hF/2,wF,hF);
+					ctxF.restore();
+					
+					ctxF.save();
+					ctxF.translate(cxF,cyF);
+					ctxF.rotate(moonAngle);
+					ctxF.drawImage(moonImg,0,0,moonImg.width,moonImg.height,-wF/2,-hF/2,wF,hF);
+					ctxF.restore();
+					
+					ctxF.font = "12px Arial";
+					ctxF.fillText("astrolabeproject.com",canvasF.width-130,canvasF.height-15);
+				}
+
+				function drawMoonPath(){
+					ctxF.save();
+					ctxF.translate(cxF,cyF);
+					ctxF.rotate(moonAngle);
+					ctxF.beginPath();
+					ctxF.moveTo(0,-110);
+					ctxF.lineTo(0,-285);
+					ctxF.lineTo(-70,-150);
+					ctxF.lineTo(-70,-285);
+					ctxF.lineTo(-70,-90);
+					ctxF.closePath();
+					//ctxF.fillStyle="blue";
+					//ctxF.fill();
+					ctxF.restore();
+				}
+
+				function drawSunPath(){
+					ctxF.save();
+					ctxF.translate(cxF,cyF);
+					ctxF.rotate(sunAngle);
+					ctxF.beginPath();
+					ctxF.moveTo(130,0);
+					ctxF.lineTo(285,0);
+					ctxF.lineTo(150,-70);
+					ctxF.lineTo(285,-70);
+					ctxF.lineTo(110,-70);
+					ctxF.closePath();
+					//ctxF.fillStyle="blue";
+					//ctxF.fill();
+					ctxF.restore(); 
+				}
+
+				function drawCalendarPath(){
+					ctxF.save();
+					ctxF.translate(cxF,cyF);
+					ctxF.rotate(calendarAngle);
+					ctxF.beginPath();
+					ctxF.arc(0,0,250,0,2 * Math.PI, false);
+					//ctxF.fillStyle="blue";
+					//ctxF.fill();
+					ctxF.restore();
+				}
+				
+				function updateAngles(mouseXLast, mouseYLast, mouseX, mouseY){
+					var dx1=mouseXLast-cxF;
+					var dy1=mouseYLast-cyF;
+					var dx2=mouseX-cxF;
+					var dy2=mouseY-cyF;
+
+					// compute previous angle of mouse
+					var mouseAngle1=Math.atan2(dy1,dx1);
+
+					// compute new angle of mouse
+					var mouseAngle2=Math.atan2(dy2,dx2);
+
+					// add change in mouse angle to object angle
+					var delta = mouseAngle1 - mouseAngle2;
+
+					//console.log("deltaX/Y: " + deltaX + " / " + deltaY);
+
+					if (moonSelected){
+						moonAngle=moonAngle - delta;
+					}else if (sunSelected){
+						sunAngle=sunAngle - delta;
+					}else if (calendarSelected){
+						calendarAngle=calendarAngle - delta;
+					}
+					draw();
+				}
+
+				function updateSelected(mouseX,mouseY){
+					// determine what is selected
+					drawMoonPath();
+					moonSelected=ctxF.isPointInPath(mouseX,mouseY);
+					
+					if (!moonSelected){
+						drawSunPath();
+						sunSelected=ctxF.isPointInPath(mouseX,mouseY);
+					}
+					
+					if (!moonSelected && !sunSelected){
+						drawCalendarPath();
+						calendarSelected=ctxF.isPointInPath(mouseX,mouseY);
+					}				
+					console.log("Moon:" + moonSelected + ", " + "Sun:" + sunSelected  + ", " + "Calendar:" + calendarSelected );
+				}
+
+				function handleMouseDown(e){
+					mouseX=parseInt(e.clientX-offsetX);
+					mouseY=parseInt(e.clientY-offsetY);
+					updateSelected(mouseX,mouseY);
+				}
+
+				function handleMouseUp(e){
+					moonSelected=false;
+					sunSelected=false;
+					calendarSelected=false;
+				}
+
+				function handleMouseOut(e){
+					moonSelected=false;
+					sunSelected=false;
+					calendarSelected=false;
+				}
+
+				function handleMouseMove(e){
+					if(!moonSelected && !sunSelected && !calendarSelected){return;}
+
+					// save previous mouse position
+					mouseXLast = mouseX;
+					mouseYLast = mouseY;
+
+					// get current mouse position
+					mouseX=parseInt(e.clientX-offsetX);
+					mouseY=parseInt(e.clientY-offsetY);
+
+					updateAngles(mouseXLast, mouseYLast, mouseX, mouseY);
+				}
+
+				function touchXY(e) {
+					if (!e){
+						var e = event;
+					}
+					e.preventDefault();
+					if(!moonSelected && !sunSelected && !calendarSelected){return;}
+
+					// save previous finger position
+					mouseXLast = mouseX;
+					mouseYLast = mouseY;
+
+					// get current finger position
+					mouseX = parseInt(e.pageX - offsetX);
+					mouseY = parseInt(e.pageY - offsetY);
+
+					updateAngles(mouseXLast, mouseYLast, mouseX, mouseY);
+				}
+
+				function touchUp() {
+					moonSelected = false;
+					sunSelected = false;
+					calendarSelected=false;
+				}
+
+				function touchDown(e) {
+					if (!e){
+						var e = event;
+					}
+					e.preventDefault();
+					mouseX = parseInt(e.pageX - offsetX);
+					mouseY = parseInt(e.pageY - offsetY);
+					updateSelected(mouseX,mouseY);
+				}
+
+				$("#canvasfront").mousedown(function(e){handleMouseDown(e);});
+				$("#canvasfront").mousemove(function(e){handleMouseMove(e);});
+				$("#canvasfront").mouseup(function(e){handleMouseUp(e);});
+				$("#canvasfront").mouseout(function(e){handleMouseOut(e);});
+				canvasF.addEventListener("touchstart", touchDown, false);
+				canvasF.addEventListener("touchmove", touchXY, true);
+				canvasF.addEventListener("touchend", touchUp, false);
+
+				document.body.addEventListener("touchcancel", touchUp, false);
+				window.onload = draw();
+
+
+			}); // end $(function(){});
+
+		</script>
+
+	</head>
+
+	<body>
+		<div id="astrolabePanel" class="astrolabe panel">
+			<div class="front">
+				<canvas id="canvasfront" width=700 height=700></canvas>
+			</div>
+		</div>
+		<div id="preload">
+		   <img src="base.png" width="1" height="1" alt="Image 01" />
+		   <img src="calendar.png" width="1" height="1" alt="Image 02" />
+		   <img src="sun.png" width="1" height="1" alt="Image 03" />
+		   <img src="moon.png" width="1" height="1" alt="Image 04" />
+		</div>		
+	</body>
+</html>
