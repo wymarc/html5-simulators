@@ -140,11 +140,12 @@ Book Title or subject: Medical miscellany, including an astronomical calendar
 					ctxF.rotate(moonAngle);
 					ctxF.beginPath();
 					ctxF.moveTo(0,-110);
-					ctxF.lineTo(0,-285);
-					ctxF.lineTo(-70,-150);
-					ctxF.lineTo(-70,-285);
+					ctxF.lineTo(0,-260);
+					ctxF.lineTo(-15,-250);
+					ctxF.lineTo(-70,-120);
 					ctxF.lineTo(-70,-90);
 					ctxF.closePath();
+					
 					//ctxF.fillStyle="blue";
 					//ctxF.fill();
 					ctxF.restore();
@@ -156,12 +157,12 @@ Book Title or subject: Medical miscellany, including an astronomical calendar
 					ctxF.rotate(sunAngle);
 					ctxF.beginPath();
 					ctxF.moveTo(130,0);
-					ctxF.lineTo(285,0);
-					ctxF.lineTo(150,-70);
-					ctxF.lineTo(285,-70);
+					ctxF.lineTo(260,0);
+					ctxF.lineTo(250,-15);
+					ctxF.lineTo(120,-70);
 					ctxF.lineTo(110,-70);
 					ctxF.closePath();
-					//ctxF.fillStyle="blue";
+					//ctxF.fillStyle="red";
 					//ctxF.fill();
 					ctxF.restore(); 
 				}
@@ -172,6 +173,17 @@ Book Title or subject: Medical miscellany, including an astronomical calendar
 					ctxF.rotate(calendarAngle);
 					ctxF.beginPath();
 					ctxF.arc(0,0,250,0,2 * Math.PI, false);
+					//ctxF.fillStyle="blue";
+					//ctxF.fill();
+					ctxF.restore();
+				}
+				
+				function drawCalendarCutoutPath(){
+					ctxF.save();
+					ctxF.translate(cxF,cyF);
+					ctxF.rotate(calendarAngle);
+					ctxF.beginPath();
+					ctxF.arc(0,0,130,0,2 * Math.PI, false);
 					//ctxF.fillStyle="blue";
 					//ctxF.fill();
 					ctxF.restore();
@@ -216,7 +228,9 @@ Book Title or subject: Medical miscellany, including an astronomical calendar
 					
 					if (!moonSelected && !sunSelected){
 						drawCalendarPath();
-						calendarSelected=ctxF.isPointInPath(mouseX,mouseY);
+						var onCalendar=ctxF.isPointInPath(mouseX,mouseY);
+						drawCalendarCutoutPath();
+						calendarSelected=onCalendar && !ctxF.isPointInPath(mouseX,mouseY);
 					}				
 					console.log("Moon:" + moonSelected + ", " + "Sun:" + sunSelected  + ", " + "Calendar:" + calendarSelected );
 				}
