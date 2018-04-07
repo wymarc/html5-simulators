@@ -38,8 +38,8 @@ Book Title or subject: Medical miscellany, including an astronomical calendar
 			body,canvas{ background-color: #EEE8AA; }
 			.panel {
 				float: left;
-				width: 850px;
-				height: 850px;
+				width: 800px;
+				height: 800px;
 				position: relative;
 				font-size: .8em;
 
@@ -140,11 +140,11 @@ Book Title or subject: Medical miscellany, including an astronomical calendar
 					ctxF.translate(cxF,cyF);
 					ctxF.rotate(moonAngle);
 					ctxF.beginPath();
-					ctxF.moveTo(0,-110);
-					ctxF.lineTo(0,-290);
-					ctxF.lineTo(-15,-280);
-					ctxF.lineTo(-70,-150);
-					ctxF.lineTo(-70,-90);
+					ctxF.moveTo(0,-125);
+					ctxF.lineTo(0,-335);
+					ctxF.lineTo(-15,-320);
+					ctxF.lineTo(-80,-175);
+					ctxF.lineTo(-80,-105);
 					ctxF.closePath();					
 					//ctxF.fillStyle="blue";
 					//ctxF.fill();
@@ -157,10 +157,10 @@ Book Title or subject: Medical miscellany, including an astronomical calendar
 					ctxF.rotate(sunAngle);
 					ctxF.beginPath();
 					ctxF.moveTo(130,0);
-					ctxF.lineTo(290,0);
-					ctxF.lineTo(280,-15);
-					ctxF.lineTo(150,-70);
-					ctxF.lineTo(110,-70);
+					ctxF.lineTo(335,0);
+					ctxF.lineTo(325,-15);
+					ctxF.lineTo(180,-80);
+					ctxF.lineTo(110,-80);
 					ctxF.closePath();
 					//ctxF.fillStyle="red";
 					//ctxF.fill();
@@ -172,7 +172,7 @@ Book Title or subject: Medical miscellany, including an astronomical calendar
 					ctxF.translate(cxF,cyF);
 					ctxF.rotate(calendarAngle);
 					ctxF.beginPath();
-					ctxF.arc(0,0,267,0,2 * Math.PI, false);
+					ctxF.arc(0,0,305,0,2 * Math.PI, false);
 					//ctxF.fillStyle="blue";
 					//ctxF.fill();
 					ctxF.restore();
@@ -183,7 +183,7 @@ Book Title or subject: Medical miscellany, including an astronomical calendar
 					ctxF.translate(cxF,cyF);
 					ctxF.rotate(calendarAngle);
 					ctxF.beginPath();
-					ctxF.arc(0,0,135,0,2 * Math.PI, false);
+					ctxF.arc(0,0,155,0,2 * Math.PI, false);
 					//ctxF.fillStyle="blue";
 					//ctxF.fill();
 					ctxF.restore();
@@ -322,7 +322,7 @@ Book Title or subject: Medical miscellany, including an astronomical calendar
 	<body>
 		<div id="astrolabePanel" class="astrolabe panel">
 			<div class="front">
-				<canvas id="canvasfront" width=850 height=850></canvas>
+				<canvas id="canvasfront" width=800 height=800></canvas>
 			</div>
 		</div>
 		<div id="preload">
