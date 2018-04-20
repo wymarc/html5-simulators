@@ -16,6 +16,8 @@ Copyright (c) 2016 Timothy J. Mitchell
 
 1.0 First pass
 1.1 Added advanced astrolabe option
+1.2 Code cleanup
+
 -->
 
 <html>
@@ -71,7 +73,6 @@ Copyright (c) 2016 Timothy J. Mitchell
 				-webkit-transform: rotateY(179deg);
 				transform: rotateY(179deg);
 			}
-
 			.panel .back {
 				float: none;
 				position: absolute;
@@ -80,7 +81,6 @@ Copyright (c) 2016 Timothy J. Mitchell
 				z-index: 800;
 				width: inherit;
 				height: inherit;
-
 
 				-webkit-transform: rotateY(-179deg);
 				transform: rotateY(-179deg);
@@ -95,17 +95,11 @@ Copyright (c) 2016 Timothy J. Mitchell
 				-webkit-transition: all .6s ease-in-out;
 				transition: all .6s ease-in-out;
 			}
-
 			.panel.flip .back {
 				z-index: 1000;
-
-
 				-webkit-transform: rotateX(0) rotateY(0);
 				transform: rotateX(0) rotateY(0);
-
-
 			}
-
 			/* -- X axis rotation for astrolabe panel -- */
 			.astrolabe .front {
 				cursor: pointer;
@@ -129,111 +123,114 @@ Copyright (c) 2016 Timothy J. Mitchell
 		</style>
 		<script>
 			$(function(){
-				var advancedSelected = false;
-				var reteSelected=false;
-				var ruleSelected=false;
-				var alidadeSelected=false;
-				var lockedTogether=false;
-				var frontSide=true;
-				var reteAngle=0;
-				var ruleAngle=0;
-				var alidadeAngle=0;
-				var lockImgLocation = {"x":0,"y":0};
-				var flipImgLocation = {"x":0,"y":0};
-				var mouseX;
-				var mouseY;
-				var mouseXLast;
-				var mouseYLast;
+                let advancedSelected = false;
+                let reteSelected = false;
+                let ruleSelected = false;
+                let alidadeSelected = false;
+                let lockedTogether = false;
+                let frontSide = true;
+                let reteAngle = 0;
+                let ruleAngle = 0;
+                let alidadeAngle = 0;
+                let lockImgLocation = {"x":0,"y":0};
+                let flipImgLocation = {"x":0,"y":0};
+                let mouseX;
+                let mouseY;
+                let mouseXLast;
+                let mouseYLast;
 				
 
 				// set up front canvas
-				var canvasF=document.getElementById("canvasfront");
-				var ctxF=canvasF.getContext("2d");
-				var canvasOffsetF=$("#canvasfront").offset();
-				var offsetX=canvasOffsetF.left;
-				var offsetY=canvasOffsetF.top;
-				var cxF=canvasF.width/2;
-				var cyF=canvasF.height/2;
-				var wF=canvasF.width;
-				var hF=canvasF.height;
+                let canvasF=document.getElementById("canvasfront");
+                let ctxF=canvasF.getContext("2d");
+                let canvasFront = $("#canvasfront");
+                let canvasOffsetF = canvasFront.offset();
+                let offsetX = canvasOffsetF.left;
+                let offsetY = canvasOffsetF.top;
+                let cxF = canvasF.width/2;
+                let cyF = canvasF.height/2;
+                let wF = canvasF.width;
+                let hF = canvasF.height;
 
-				var frontImg=new Image();
-				frontImg.onload=function(){
+                let frontImg = new Image();
+				frontImg.onload = function(){
 					draw();
-				}
-				frontImg.src="base.png";
+				};
+				frontImg.src = "base.png";
 
-				var reteImg=new Image();
-				reteImg.onload=function(){
+                let reteImg = new Image();
+				reteImg.onload = function(){
 					draw();
-				}
-				reteImg.src="rete.png";
+				};
+				reteImg.src = "rete.png";
 
-				var ruleImg=new Image();
-				ruleImg.onload=function(){
+                let ruleImg = new Image();
+				ruleImg.onload = function(){
 					draw();
-				}
-				ruleImg.src="rule.png";
+				};
+				ruleImg.src = "rule.png";
 
-				var horseImg=new Image();
-				horseImg.onload=function(){
+                let horseImg = new Image();
+				horseImg.onload = function(){
 					draw();
-				}
-				horseImg.src="horse.png";
+				};
+				horseImg.src = "horse.png";
 
 
 				// set up back canvas
-				var canvasB=document.getElementById("canvasback");
-				var ctxB=canvasB.getContext("2d");
-				var canvasOffsetB=$("#canvasback").offset();
-				var cxB=canvasB.width/2;
-				var cyB=canvasB.height/2;
-				var wB=canvasB.width;
-				var hB=canvasB.height;
+                let canvasB = document.getElementById("canvasback");
+                let ctxB = canvasB.getContext("2d");
+                let canvasBack = $("#canvasback");
+                //let canvasOffsetB=$("#canvasback").offset();
+                let cxB = canvasB.width/2;
+                let cyB = canvasB.height/2;
+                let wB = canvasB.width;
+                let hB = canvasB.height;
 
-				var backImg=new Image();
-				backImg.onload=function(){
+                let backImg = new Image();
+				backImg.onload = function(){
 					draw();
-				}
-				backImg.src="backbase.png";
+				};
+				backImg.src = "backbase.png";
 
-				var imgAlidade=new Image();
-				imgAlidade.onload=function(){
+                let imgAlidade = new Image();
+				imgAlidade.onload = function(){
 					draw();
-				}
-				imgAlidade.src="alidade.png";
+				};
+				imgAlidade.src = "alidade.png";
 
-				var imgPin=new Image();
-				imgPin.onload=function(){
+                let imgPin = new Image();
+				imgPin.onload = function(){
 					draw();
-				}
-				imgPin.src="pin.png";
+				};
+				imgPin.src = "pin.png";
 
 				// Set up controls
-				var flipImg=new Image();
-				flipImg.onload=function(){
-					var x = -((canvasF.width/2)-10);
-					var y = -((canvasF.width/2)-10);
+                let flipImg = new Image();
+				flipImg.onload = function(){
+                    let x = -((canvasF.width/2) - 10);
+                    let y = -((canvasF.width/2) - 10);
 					flipImgLocation = {"x":x,"y":y};
 					draw();
-				}
-				flipImg.src="flip.png";
+				};
+				flipImg.src = "flip.png";
 
-				var lockImg=new Image();
-				lockImg.onload=function(){
-					var x = (canvasF.width/2)-lockImg.width-10;
-					var y = -((canvasF.width/2)-10);
+                let lockImg = new Image();
+				lockImg.onload = function(){
+                    let x = (canvasF.width/2) - lockImg.width-10;
+                    let y = -((canvasF.width/2) - 10);
 					lockImgLocation = {"x":x,"y":y};
 					draw();
-				}
+				};
 				lockImg.src="pinup.png";
-				
-				var advancedSelectedImg=new Image();
-				advancedSelectedImg.onload=function(){
-					var x = (canvasF.width/2)-advancedSelectedImg.width-10;
-					var y = -((canvasF.width/2)-10);
-				}				
-				if(advancedSelected == true){
+
+                let advancedSelectedImg = new Image();
+				// advancedSelectedImg.onload = function(){
+                 //    let x = (canvasF.width/2) - advancedSelectedImg.width - 10;
+                 //    let y = -((canvasF.width/2)-10);
+				// };
+
+				if(advancedSelected === true){
 					advancedSelectedImg.src="select.png";
 				}else{
 					advancedSelectedImg.src="unselect.png";
@@ -382,31 +379,31 @@ Copyright (c) 2016 Timothy J. Mitchell
 				}
 				
 				function updateAngles(mouseXLast, mouseYLast, mouseX, mouseY){
-					var dx1=mouseXLast-cxF;
-					var dy1=mouseYLast-cyF;
-					var dx2=mouseX-cxF;
-					var dy2=mouseY-cyF;
+                    let dx1 = mouseXLast - cxF;
+                    let dy1 = mouseYLast - cyF;
+                    let dx2 = mouseX - cxF;
+                    let dy2 = mouseY - cyF;
 
 					// compute previous angle of mouse
-					var mouseAngle1=Math.atan2(dy1,dx1);
+                    let mouseAngle1 = Math.atan2(dy1,dx1);
 
 					// compute new angle of mouse
-					var mouseAngle2=Math.atan2(dy2,dx2);
+                    let mouseAngle2 = Math.atan2(dy2,dx2);
 
 					// add change in mouse angle to object angle
-					var delta = mouseAngle1 - mouseAngle2;
+                    let delta = mouseAngle1 - mouseAngle2;
 
 					//console.log("deltaX/Y: " + deltaX + " / " + deltaY);
 
 					if (alidadeSelected){
-						alidadeAngle=alidadeAngle - delta;
+						alidadeAngle = alidadeAngle - delta;
 					}else if (lockedTogether){
-						ruleAngle=ruleAngle - delta;
-						reteAngle=reteAngle - delta;
+						ruleAngle = ruleAngle - delta;
+						reteAngle = reteAngle - delta;
 					}else if (ruleSelected){
-						ruleAngle=ruleAngle - delta;
+						ruleAngle = ruleAngle - delta;
 					}else if (reteSelected){
-						reteAngle=reteAngle - delta;
+						reteAngle = reteAngle - delta;
 					}
 
 					draw();
@@ -432,16 +429,16 @@ Copyright (c) 2016 Timothy J. Mitchell
 					// check advanced button
 					drawAdvButtonPath();
 					if(ctxF.isPointInPath(mouseX,mouseY)){
-						if(advancedSelected == true){
+						if(advancedSelected === true){
 							advancedSelected = false;
-							advancedSelectedImg.src="unselect.png";
-							frontImg.src="base.png";
-							backImg.src="backbase.png";
+							advancedSelectedImg.src = "unselect.png";
+							frontImg.src = "base.png";
+							backImg.src = "backbase.png";
 						}else{
 							advancedSelected = true;
-							advancedSelectedImg.src="select.png";
-							frontImg.src="baseadv.png";
-							backImg.src="backbaseadv.png";							
+							advancedSelectedImg.src = "select.png";
+							frontImg.src = "baseadv.png";
+							backImg.src = "backbaseadv.png";
 						}						
 						draw();
 					}					
@@ -453,12 +450,12 @@ Copyright (c) 2016 Timothy J. Mitchell
 							if(lockedTogether){
 								//unlock
 								lockedTogether = false;
-								lockImg.src="pinup.png";
+								lockImg.src = "pinup.png";
 								draw();
 							}else{
 								//lock
 								lockedTogether = true;
-								lockImg.src="pindown.png";
+								lockImg.src = "pindown.png";
 								draw();
 							}
 							return;
@@ -485,18 +482,18 @@ Copyright (c) 2016 Timothy J. Mitchell
 				}
 
 				function handleMouseDown(e){
-					mouseX=parseInt(e.clientX-offsetX);
-					mouseY=parseInt(e.clientY-offsetY);
+					mouseX = e.clientX-offsetX;
+					mouseY = e.clientY-offsetY;
 					updateSelected(mouseX,mouseY);
 				}
 
-				function handleMouseUp(e){
+				function handleMouseUp(){
 					reteSelected=false;
 					ruleSelected=false;
 					alidadeSelected=false;
 				}
 
-				function handleMouseOut(e){
+				function handleMouseOut(){
 					reteSelected=false;
 					ruleSelected=false;
 					alidadeSelected=false;
@@ -510,15 +507,15 @@ Copyright (c) 2016 Timothy J. Mitchell
 					mouseYLast = mouseY;
 
 					// get current mouse position
-					mouseX=parseInt(e.clientX-offsetX);
-					mouseY=parseInt(e.clientY-offsetY);
+					mouseX = e.clientX-offsetX;
+					mouseY = e.clientY-offsetY;
 
 					updateAngles(mouseXLast, mouseYLast, mouseX, mouseY);
 				}
 
 				function touchXY(e) {
 					if (!e){
-						var e = event;
+						e = event;
 					}
 					e.preventDefault();
 					if(!reteSelected && !ruleSelected && !alidadeSelected){return;}
@@ -528,8 +525,8 @@ Copyright (c) 2016 Timothy J. Mitchell
 					mouseYLast = mouseY;
 
 					// get current finger position
-					mouseX = parseInt(e.pageX - offsetX);
-					mouseY = parseInt(e.pageY - offsetY);
+					mouseX = e.pageX - offsetX;
+					mouseY = e.pageY - offsetY;
 
 					updateAngles(mouseXLast, mouseYLast, mouseX, mouseY);
 				}
@@ -542,26 +539,26 @@ Copyright (c) 2016 Timothy J. Mitchell
 
 				function touchDown(e) {
 					if (!e){
-						var e = event;
+						e = event;
 					}
 					e.preventDefault();
-					mouseX = parseInt(e.pageX - offsetX);
-					mouseY = parseInt(e.pageY - offsetY);
+					mouseX = e.pageX - offsetX;
+					mouseY = e.pageY - offsetY;
 					updateSelected(mouseX,mouseY);
 				}
 
-				$("#canvasfront").mousedown(function(e){handleMouseDown(e);});
-				$("#canvasfront").mousemove(function(e){handleMouseMove(e);});
-				$("#canvasfront").mouseup(function(e){handleMouseUp(e);});
-				$("#canvasfront").mouseout(function(e){handleMouseOut(e);});
+				canvasFront.mousedown(function(e){handleMouseDown(e);});
+                canvasFront.mousemove(function(e){handleMouseMove(e);});
+                canvasFront.mouseup(function(e){handleMouseUp(e);});
+                canvasFront.mouseout(function(e){handleMouseOut(e);});
 				canvasF.addEventListener("touchstart", touchDown, false);
 				canvasF.addEventListener("touchmove", touchXY, true);
 				canvasF.addEventListener("touchend", touchUp, false);
 
-				$("#canvasback").mousedown(function(e){handleMouseDown(e);});
-				$("#canvasback").mousemove(function(e){handleMouseMove(e);});
-				$("#canvasback").mouseup(function(e){handleMouseUp(e);});
-				$("#canvasback").mouseout(function(e){handleMouseOut(e);});
+                canvasBack.mousedown(function(e){handleMouseDown(e);});
+                canvasBack.mousemove(function(e){handleMouseMove(e);});
+                canvasBack.mouseup(function(e){handleMouseUp(e);});
+                canvasBack.mouseout(function(e){handleMouseOut(e);});
 				canvasB.addEventListener("touchstart", touchDown, false);
 				canvasB.addEventListener("touchmove", touchXY, true);
 				canvasB.addEventListener("touchend", touchUp, false);
@@ -569,7 +566,6 @@ Copyright (c) 2016 Timothy J. Mitchell
 				document.body.addEventListener("touchcancel", touchUp, false);
 
 				window.onload = draw();
-
 
 			}); // end $(function(){});
 

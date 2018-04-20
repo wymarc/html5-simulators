@@ -16,6 +16,7 @@ Copyright (c) 2017 Timothy J. Mitchell
 
 1.0 First pass
 2.0 Added improved version of images
+2.1 Code cleanup
 
 Based on:
 http://www.bl.uk/catalogues/illuminatedmanuscripts/ILLUMIN.ASP?Size=mid&IllID=12771
@@ -60,50 +61,51 @@ Book Title or subject: Medical miscellany, including an astronomical calendar
 		</style>
 		<script>
 			$(function(){
-				var calendarSelected=false;
-				var sunSelected=false;
-				var moonSelected=false;
-				var calendarAngle=0;
-				var sunAngle=0;
-				var moonAngle=0;
-				var mouseX;
-				var mouseY;
-				var mouseXLast;
-				var mouseYLast;				
+				let calendarSelected=false;
+                let sunSelected = false;
+                let moonSelected=false;
+                let calendarAngle=0;
+                let sunAngle=0;
+                let moonAngle=0;
+                let mouseX;
+                let mouseY;
+                let mouseXLast;
+                let mouseYLast;
 
 				// set up front canvas
-				var canvasF=document.getElementById("canvasfront");
-				var ctxF=canvasF.getContext("2d");
-				var canvasOffsetF=$("#canvasfront").offset();
-				var offsetX=canvasOffsetF.left;
-				var offsetY=canvasOffsetF.top;
-				var cxF=canvasF.width/2;
-				var cyF=canvasF.height/2;
-				var wF=canvasF.width;
-				var hF=canvasF.height;
+                let canvasFront = $("#canvasFront");
+                let canvasF=document.getElementById("canvasFront");
+                let ctxF=canvasF.getContext("2d");
+                let canvasOffsetF = canvasFront.offset();
+                let offsetX=canvasOffsetF.left;
+                let offsetY=canvasOffsetF.top;
+                let cxF=canvasF.width/2;
+                let cyF=canvasF.height/2;
+                let wF=canvasF.width;
+                let hF=canvasF.height;
 
-				var baseImg=new Image();
+                let baseImg=new Image();
 				baseImg.onload=function(){
 					draw();
-				}
+				};
 				baseImg.src="base.png";
 
-				var calendarImg=new Image();
+                let calendarImg=new Image();
 				calendarImg.onload=function(){
 					draw();
-				}
+				};
 				calendarImg.src="calendar.png";
 
-				var sunImg=new Image();
+                let sunImg=new Image();
 				sunImg.onload=function(){
 					draw();
-				}
+				};
 				sunImg.src="sun.png";
 
-				var moonImg=new Image();
+                let moonImg=new Image();
 				moonImg.onload=function(){
 					draw();
-				}
+				};
 				moonImg.src="moon.png";
 
 				function draw(){
@@ -190,19 +192,19 @@ Book Title or subject: Medical miscellany, including an astronomical calendar
 				}
 				
 				function updateAngles(mouseXLast, mouseYLast, mouseX, mouseY){
-					var dx1=mouseXLast-cxF;
-					var dy1=mouseYLast-cyF;
-					var dx2=mouseX-cxF;
-					var dy2=mouseY-cyF;
+                    let dx1=mouseXLast-cxF;
+                    let dy1=mouseYLast-cyF;
+                    let dx2=mouseX-cxF;
+                    let dy2=mouseY-cyF;
 
 					// compute previous angle of mouse
-					var mouseAngle1=Math.atan2(dy1,dx1);
+                    let mouseAngle1=Math.atan2(dy1,dx1);
 
 					// compute new angle of mouse
-					var mouseAngle2=Math.atan2(dy2,dx2);
+                    let mouseAngle2=Math.atan2(dy2,dx2);
 
 					// add change in mouse angle to object angle
-					var delta = mouseAngle1 - mouseAngle2;
+                    let delta = mouseAngle1 - mouseAngle2;
 
 					//console.log("deltaX/Y: " + deltaX + " / " + deltaY);
 
@@ -219,7 +221,7 @@ Book Title or subject: Medical miscellany, including an astronomical calendar
 				function updateSelected(mouseX,mouseY){
 					// determine what is selected
 					drawMoonPath();
-					moonSelected=ctxF.isPointInPath(mouseX,mouseY);
+					moonSelected = ctxF.isPointInPath(mouseX,mouseY);
 					
 					if (!moonSelected){
 						drawSunPath();
@@ -228,29 +230,29 @@ Book Title or subject: Medical miscellany, including an astronomical calendar
 					
 					if (!moonSelected && !sunSelected){
 						drawCalendarPath();
-						var onCalendar=ctxF.isPointInPath(mouseX,mouseY);
+                        let onCalendar = ctxF.isPointInPath(mouseX,mouseY);
 						drawCalendarCutoutPath();
-						calendarSelected=onCalendar && !ctxF.isPointInPath(mouseX,mouseY);
+						calendarSelected = onCalendar && !ctxF.isPointInPath(mouseX,mouseY);
 					}				
 					console.log("Moon:" + moonSelected + ", " + "Sun:" + sunSelected  + ", " + "Calendar:" + calendarSelected );
 				}
 
 				function handleMouseDown(e){
-					mouseX=parseInt(e.clientX-offsetX);
-					mouseY=parseInt(e.clientY-offsetY);
+					mouseX = e.clientX-offsetX;
+					mouseY = e.clientY-offsetY;
 					updateSelected(mouseX,mouseY);
 				}
 
-				function handleMouseUp(e){
-					moonSelected=false;
-					sunSelected=false;
-					calendarSelected=false;
+				function handleMouseUp(){
+					moonSelected = false;
+					sunSelected = false;
+					calendarSelected = false;
 				}
 
-				function handleMouseOut(e){
-					moonSelected=false;
-					sunSelected=false;
-					calendarSelected=false;
+				function handleMouseOut(){
+					moonSelected = false;
+					sunSelected = false;
+					calendarSelected = false;
 				}
 
 				function handleMouseMove(e){
@@ -261,16 +263,13 @@ Book Title or subject: Medical miscellany, including an astronomical calendar
 					mouseYLast = mouseY;
 
 					// get current mouse position
-					mouseX=parseInt(e.clientX-offsetX);
-					mouseY=parseInt(e.clientY-offsetY);
+					mouseX = e.clientX-offsetX;
+					mouseY = e.clientY-offsetY;
 
 					updateAngles(mouseXLast, mouseYLast, mouseX, mouseY);
 				}
 
 				function touchXY(e) {
-					if (!e){
-						var e = event;
-					}
 					e.preventDefault();
 					if(!moonSelected && !sunSelected && !calendarSelected){return;}
 
@@ -279,8 +278,8 @@ Book Title or subject: Medical miscellany, including an astronomical calendar
 					mouseYLast = mouseY;
 
 					// get current finger position
-					mouseX = parseInt(e.pageX - offsetX);
-					mouseY = parseInt(e.pageY - offsetY);
+					mouseX = e.pageX - offsetX;
+					mouseY = e.pageY - offsetY;
 
 					updateAngles(mouseXLast, mouseYLast, mouseX, mouseY);
 				}
@@ -288,23 +287,20 @@ Book Title or subject: Medical miscellany, including an astronomical calendar
 				function touchUp() {
 					moonSelected = false;
 					sunSelected = false;
-					calendarSelected=false;
+					calendarSelected = false;
 				}
 
 				function touchDown(e) {
-					if (!e){
-						var e = event;
-					}
 					e.preventDefault();
-					mouseX = parseInt(e.pageX - offsetX);
-					mouseY = parseInt(e.pageY - offsetY);
+					mouseX = e.pageX - offsetX;
+					mouseY = e.pageY - offsetY;
 					updateSelected(mouseX,mouseY);
 				}
 
-				$("#canvasfront").mousedown(function(e){handleMouseDown(e);});
-				$("#canvasfront").mousemove(function(e){handleMouseMove(e);});
-				$("#canvasfront").mouseup(function(e){handleMouseUp(e);});
-				$("#canvasfront").mouseout(function(e){handleMouseOut(e);});
+                canvasFront.mousedown(function(e){handleMouseDown(e);});
+                canvasFront.mousemove(function(e){handleMouseMove(e);});
+                canvasFront.mouseup(function(e){handleMouseUp(e);});
+                canvasFront.mouseout(function(e){handleMouseOut(e);});
 				canvasF.addEventListener("touchstart", touchDown, false);
 				canvasF.addEventListener("touchmove", touchXY, true);
 				canvasF.addEventListener("touchend", touchUp, false);
@@ -322,7 +318,7 @@ Book Title or subject: Medical miscellany, including an astronomical calendar
 	<body>
 		<div id="astrolabePanel" class="astrolabe panel">
 			<div class="front">
-				<canvas id="canvasfront" width=800 height=800></canvas>
+				<canvas id="canvasFront" width=800 height=800></canvas>
 			</div>
 		</div>
 		<div id="preload">
