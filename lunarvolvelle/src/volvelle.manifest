@@ -1,0 +1,22 @@
+CACHE MANIFEST
+
+# Cache manafest for the lunar volvelle simulator
+
+# Cache manifest version 0.0.1
+
+# If you change the version number in this comment,
+# the cache manifest is no longer byte-for-byte
+# identical. 
+
+CACHE:
+# imagery to cache.
+base.png
+calendar.png
+icon.png
+moon.png
+sun.png
+
+# librarys and code to cache
+jquery.min.js
+sim.html
+
