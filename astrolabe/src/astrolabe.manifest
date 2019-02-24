@@ -1,0 +1,32 @@
+CACHE MANIFEST
+
+# Cache manafest for the astrolabe simulator
+
+# Cache manifest version 0.0.1
+
+# If you change the version number in this comment,
+# the cache manifest is no longer byte-for-byte
+# identical. 
+
+CACHE:
+# imagery to cache.
+alidade.png
+backbase.png
+backbaseadv.png
+base.png
+baseadv.png
+flip.png
+horse.png
+icon.png
+pin.png
+pindown.png 
+pinup.png
+rete.png
+rule.png
+select.png
+unselect.png
+
+# librarys and code to cache
+jquery.min.js
+sim.html
+
