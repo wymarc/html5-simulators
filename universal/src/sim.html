@@ -1,0 +1,258 @@
+<!doctype html>
+<!--
+Universal Astrolabe Simulator,v 1.0
+
+The Universal Astrolabe Simulator is free software; you can redistribute it
+and/or modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2 of
+the License, or(at your option) any later version.
+
+The Universal Astrolabe Simulator is distributed in the hope that it will be
+useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+Copyright (c) 2019 Timothy J. Mitchell
+
+1.0 First pass
+-->
+
+<html manifest="universal.manifest">
+	<head>
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<meta name="apple-mobile-web-app-title" content="Astrolabe">
+		<link rel="apple-touch-icon" href="icon.png">
+		<script type="text/javascript" src="jquery.min.js"></script>
+
+		<style>
+			body,canvas{ background-color: #EEE8AA; }
+			.panel {
+				float: left;
+				width: 701px;
+				height: 701px;
+				position: relative;
+				font-size: .8em;
+
+				-webkit-perspective: 1000px;
+				perspective: 1000px;
+			}
+			.panel .front {
+				float: none;
+				position: absolute;
+				top: 0;
+				left: 0;
+				z-index: 900;
+				width: inherit;
+				height: inherit;
+
+				text-align: center;
+
+				-webkit-transform: rotateX(0) rotateY(0);
+				transform: rotateX(0) rotateY(0);
+
+				-webkit-transform-style: preserve-3d;
+				transform-style: preserve-3d;
+
+			.astrolabe .front {
+				cursor: pointer;
+				-webkit-transform: rotateY(0);
+				transform: rotateY(0);
+			}
+			div#preload { display: none; }			
+		</style>
+		<script>
+			$(function(){
+                let reteSelected = false;
+                let reteAngle = 0;
+                let mouseX;
+                let mouseY;
+                let mouseXLast;
+                let mouseYLast;
+				
+
+				// set up front canvas
+                let canvasF=document.getElementById("canvasfront");
+                let ctxF=canvasF.getContext("2d");
+                let canvasFront = $("#canvasfront");
+                let canvasOffsetF = canvasFront.offset();
+                let offsetX = canvasOffsetF.left;
+                let offsetY = canvasOffsetF.top;
+                let cxF = canvasF.width/2;
+                let cyF = canvasF.height/2;
+                let wF = canvasF.width;
+                let hF = canvasF.height;
+
+                let frontImg = new Image();
+				frontImg.onload = function(){
+					draw();
+				};
+				frontImg.src = "ubase.png";
+
+        let reteImg = new Image();
+				reteImg.onload = function(){
+					draw();
+				};
+				reteImg.src = "urete.png";
+
+        let horseImg = new Image();
+				horseImg.onload = function(){
+					draw();
+				};
+				horseImg.src = "horse.png";
+
+
+				function draw(){
+					ctxF.clearRect(0,0,canvasF.width,canvasF.height);
+					ctxF.save();
+					ctxF.translate(cxF,cyF);
+					ctxF.drawImage(frontImg,0,0,frontImg.width,frontImg.height,-wF/2,-hF/2,wF,hF);
+					ctxF.restore();
+					ctxF.save();
+					ctxF.translate(cxF,cyF);
+					ctxF.rotate(reteAngle);
+					ctxF.drawImage(reteImg,0,0,reteImg.width,reteImg.height,-wF/2,-hF/2,wF,hF);
+					ctxF.restore();
+					ctxF.save();
+					ctxF.translate(cxF,cyF);
+					ctxF.drawImage(horseImg,0,0,horseImg.width,horseImg.height,-wF/2,-hF/2,wF,hF);
+					ctxF.restore();
+					ctxF.font = "12px Arial";
+					ctxF.fillText("astrolabeproject.com",canvasF.width-130,canvasF.height-15);
+				}
+
+				function drawRetePath(){
+					ctxF.save();
+					ctxF.translate(cxF,cyF);
+					ctxF.rotate(reteAngle);
+					ctxF.beginPath();
+					ctxF.arc(0,0,298,0,2 * Math.PI, false);
+					//ctxF.fillStyle="blue";
+					//ctxF.fill();
+					ctxF.restore();
+				}
+
+	
+				function updateAngles(mouseXLast, mouseYLast, mouseX, mouseY){
+                    let dx1 = mouseXLast - cxF;
+                    let dy1 = mouseYLast - cyF;
+                    let dx2 = mouseX - cxF;
+                    let dy2 = mouseY - cyF;
+
+					// compute previous angle of mouse
+                    let mouseAngle1 = Math.atan2(dy1,dx1);
+
+					// compute new angle of mouse
+                    let mouseAngle2 = Math.atan2(dy2,dx2);
+
+					// add change in mouse angle to object angle
+                    let delta = mouseAngle1 - mouseAngle2;
+
+					//console.log("deltaX/Y: " + deltaX + " / " + deltaY);
+
+				if (reteSelected){
+						reteAngle = reteAngle - delta;
+					}
+
+					draw();
+				}
+
+				function updateSelected(mouseX,mouseY){
+					// determine what is selected
+					drawRetePath();
+					reteSelected=ctxF.isPointInPath(mouseX,mouseY);
+
+				}
+
+				function handleMouseDown(e){
+					mouseX = e.clientX-offsetX;
+					mouseY = e.clientY-offsetY;
+					updateSelected(mouseX,mouseY);
+				}
+
+				function handleMouseUp(){
+					reteSelected=false;
+				}
+
+				function handleMouseOut(){
+					reteSelected=false;
+				}
+
+				function handleMouseMove(e){
+					if(!reteSelected){return;}
+
+					// save previous mouse position
+					mouseXLast = mouseX;
+					mouseYLast = mouseY;
+
+					// get current mouse position
+					mouseX = e.clientX-offsetX;
+					mouseY = e.clientY-offsetY;
+
+					updateAngles(mouseXLast, mouseYLast, mouseX, mouseY);
+				}
+
+				function touchXY(e) {
+					if (!e){
+						e = event;
+					}
+					e.preventDefault();
+					if(!reteSelected){return;}
+
+					// save previous finger position
+					mouseXLast = mouseX;
+					mouseYLast = mouseY;
+
+					// get current finger position
+					mouseX = e.pageX - offsetX;
+					mouseY = e.pageY - offsetY;
+
+					updateAngles(mouseXLast, mouseYLast, mouseX, mouseY);
+				}
+
+				function touchUp() {
+					reteSelected = false;
+				}
+
+				function touchDown(e) {
+					if (!e){
+						e = event;
+					}
+					e.preventDefault();
+					mouseX = e.pageX - offsetX;
+					mouseY = e.pageY - offsetY;
+					updateSelected(mouseX,mouseY);
+				}
+
+				canvasFront.mousedown(function(e){handleMouseDown(e);});
+                canvasFront.mousemove(function(e){handleMouseMove(e);});
+                canvasFront.mouseup(function(e){handleMouseUp(e);});
+                canvasFront.mouseout(function(e){handleMouseOut(e);});
+				canvasF.addEventListener("touchstart", touchDown, false);
+				canvasF.addEventListener("touchmove", touchXY, true);
+				canvasF.addEventListener("touchend", touchUp, false);
+
+				document.body.addEventListener("touchcancel", touchUp, false);
+
+				window.onload = draw();
+
+			}); // end $(function(){});
+
+		</script>
+
+	</head>
+
+	<body>
+		<div id="universalPanel" class="universal panel">
+			<div class="front">
+				<canvas id="canvasfront" width=701 height=701></canvas>
+			</div>			
+		</div>
+		<div id="preload">
+		   <img src="ubase.png" width="1" height="1" alt="Image 01" />
+		   <img src="horse.png" width="1" height="1" alt="Image 06" />
+		   <img src="pin.png" width="1" height="1" alt="Image 08" />
+		   <img src="urete.png" width="1" height="1" alt="Image 11" />		      
+		</div>		
+	</body>
+</html>

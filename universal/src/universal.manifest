@@ -1,0 +1,22 @@
+CACHE MANIFEST
+
+# Cache manafest for the universal astrolabe simulator
+
+# Cache manifest version 0.0.1
+
+# If you change the version number in this comment,
+# the cache manifest is no longer byte-for-byte
+# identical. 
+
+CACHE:
+# imagery to cache.
+ubase.png
+horse.png
+icon.png
+pin.png
+urete.png
+
+# librarys and code to cache
+jquery.min.js
+sim.html
+
